@@ -3,13 +3,13 @@ defmodule Servy.Handler do
     request
     |> parse
     |> rewrite_path
+    |> rewrite_request
     |> log
     |> route
     |> track
+    |> emojify
     |> format_response
   end
-
-  def log(conv), do: IO.inspect(conv)
 
   def parse(request) do
     [method, path, _] =
@@ -31,6 +31,14 @@ defmodule Servy.Handler do
   #   route(conv, conv.method, conv.path)
   # end
 
+  def rewrite_request(%{path: "/bears?id=" <> id} = conv) do
+    %{conv | path: "/bears/" <> id}
+  end
+
+  def rewrite_request(conv), do: conv
+
+  def log(conv), do: IO.inspect(conv)
+
   def route(%{method: "GET", path: "/wildthings"} = conv) do
     %{conv | status: 200, resp_body: "Bears, Lions, Tigers"}
   end
@@ -43,16 +51,27 @@ defmodule Servy.Handler do
     %{conv | status: 200, resp_body: "Bear #{id}"}
   end
 
+  def route(%{method: "DELETE", path: "/bears/" <> _id} = conv) do
+    %{conv | status: 403, resp_body: "You are not allowed to delete any bears!"}
+  end
+
   def route(%{path: path} = conv) do
     %{conv | status: 404, resp_body: "No #{path} here"}
   end
 
   def track(%{status: 404, path: path} = conv) do
-    IO.puts "Warning: path #{path} is on the loose"
+    IO.puts("Warning: path #{path} is on the loose")
     conv
   end
 
   def track(conv), do: conv
+
+  def emojify(%{status: 200} = conv) do
+    emojies = String.duplicate("🎉", 5)
+    %{conv | resp_body: emojies <> "\n" <> conv.resp_body <> "\n" <> emojies}
+  end
+
+  def emojify(conv), do: conv
 
   def format_response(conv) do
     # TODO: Use values in the map to create an HTTP response string:
