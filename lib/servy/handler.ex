@@ -48,22 +48,17 @@ defmodule Servy.Handler do
     %{conv | status: 200, resp_body: "Bear #{id}"}
   end
 
+  #name=Baloo&type=Brown
+  def route(%Conv{method: "POST", path: "/bears"} = conv) do
+    %{ conv | status: 201,
+    resp_body: "Created a #{conv.params["type"]} bear named #{conv.params["name"]}" }
+  end
+
   def route(%Conv{method: "GET", path: "/about"} = conv) do
     @pages_path
     |> Path.join("about.html")
     |> File.read()
     |> handle_file(conv)
-  end
-
-  def route(%Conv{method: "GET", path: "/pages/" <> page} = conv) do
-    @pages_path
-    |> Path.join(page <> ".html")
-    |> File.read()
-    |> handle_file(conv)
-  end
-
-  def route(%Conv{method: "DELETE", path: "/bears/" <> _id} = conv) do
-    %{conv | status: 403, resp_body: "You are not allowed to delete any bears!"}
   end
 
   def route(%Conv{path: path} = conv) do
@@ -114,6 +109,22 @@ response = Servy.Handler.handle(request)
 
 IO.puts(response)
 
+# ------------
+
+request = """
+GET /bears HTTP/1.1
+Host: example.com
+User-Agent: ExampleBrowser/1.0
+Accept: */*
+
+"""
+
+response = Servy.Handler.handle(request)
+
+IO.puts(response)
+
+# ------------
+
 request = """
 GET /bears/1 HTTP/1.1
 Host: example.com
@@ -126,8 +137,10 @@ response = Servy.Handler.handle(request)
 
 IO.puts(response)
 
+# ------------
+
 request = """
-GET /bigfoot HTTP/1.1
+GET /wildlifez HTTP/1.1
 Host: example.com
 User-Agent: ExampleBrowser/1.0
 Accept: */*
@@ -137,6 +150,8 @@ Accept: */*
 response = Servy.Handler.handle(request)
 
 IO.puts(response)
+
+# ------------
 
 request = """
 GET /bears?id=1 HTTP/1.1
@@ -150,6 +165,8 @@ response = Servy.Handler.handle(request)
 
 IO.puts(response)
 
+# ------------
+
 request = """
 GET /about HTTP/1.1
 Host: example.com
@@ -162,8 +179,10 @@ response = Servy.Handler.handle(request)
 
 IO.puts(response)
 
+# ------------
+
 request = """
-GET /pages/test HTTP/1.1
+GET /bears/new HTTP/1.1
 Host: example.com
 User-Agent: ExampleBrowser/1.0
 Accept: */*
@@ -173,3 +192,34 @@ Accept: */*
 response = Servy.Handler.handle(request)
 
 IO.puts(response)
+
+# ------------
+
+request = """
+GET /bears/new HTTP/1.1
+Host: example.com
+User-Agent: ExampleBrowser/1.0
+Accept: */*
+
+"""
+
+response = Servy.Handler.handle(request)
+
+IO.puts(response)
+
+# -------------
+
+request = """
+POST /bears HTTP/1.1
+Host: example.com
+User-Agent: ExampleBrowser/1.0
+Accept: */*
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 21
+
+name=Baloo&type=Brown
+"""
+
+response = Servy.Handler.handle(request)
+
+IO.puts response
