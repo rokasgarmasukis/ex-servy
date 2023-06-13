@@ -28,7 +28,19 @@ defmodule Servy.Handler do
 
   def rewrite_request(%Conv{} = conv), do: conv
 
-  @doc "Logs request"
+  # for demo of concurrent, isolated processes
+  
+  def route(%Conv{ method: "GET", path: "/hibernate/" <> time } = conv) do
+    time |> String.to_integer |> :timer.sleep
+
+    %{ conv | status: 200, resp_body: "Awake!" }
+  end
+
+  def route(%Conv{ method: "GET", path: "/kaboom" } = conv) do
+    raise "Kaboom!"
+  end
+
+  # END
 
   def route(%Conv{method: "GET", path: "/wildthings"} = conv) do
     %{conv | status: 200, resp_body: "Bears, Lions, Tigers"}
@@ -95,9 +107,9 @@ defmodule Servy.Handler do
     """
     HTTP/1.1 #{Conv.full_status(conv)}\r
     Content-Type: #{conv.resp_content_type}\r
-    Content-Length: #{byte_size(conv.resp_body)}\r
     \r
     #{conv.resp_body}
     """
   end
 end
+# Content-Length: #{String.length(conv.resp_body)}\r
